@@ -1,0 +1,312 @@
+<div class="flex flex-col gap-6">
+  <mat-card class="bg-white! p-7">
+    <div class="mb-6 flex items-center gap-2 text-lg font-bold">
+      <lucide-angular [img]="QrCode" class="h-5 w-5"></lucide-angular> Generate QR Codes for
+      Check-In
+    </div>
+    <mat-form-field appearance="outline" class="mb-4 w-full" subscriptSizing="dynamic">
+      <mat-label>Select Activity</mat-label>
+      <mat-select [(ngModel)]="selectedActivity" (ngModelChange)="onActivityChange()">
+        @for (activity of activities; track activity.name) {
+          <mat-option [value]="activity"
+            >{{ activity.name }} - {{ activity.scheduleDate }}</mat-option
+          >
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (selectedActivity) {
+      <div class="mt-2 flex items-start justify-between gap-6">
+        <div class="flex-1 rounded-lg border border-gray-200 p-5">
+          <h3 class="mb-4 max-w-150 truncate text-base font-bold text-gray-900">
+            {{ selectedActivity.name }}
+          </h3>
+          <div class="space-y-2.5 text-sm">
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-2">
+              <div class="flex gap-2">
+                <span class="text-primary font-bold">Date:</span>
+                <span class="text-gray-600">{{ selectedActivity.scheduleDate }}</span>
+              </div>
+              <div class="flex gap-2">
+                <span class="text-primary font-bold">Cutoff Date:</span>
+                <span class="text-gray-600">{{ selectedActivity.cutoffDate }}</span>
+              </div>
+              <div class="flex gap-2">
+                <span class="text-primary font-bold">Time:</span>
+                <span class="text-gray-600">{{ selectedActivity.scheduleTime }}</span>
+              </div>
+              <div class="flex gap-2">
+                <span class="text-primary font-bold">Cutoff Time:</span>
+                <span class="text-gray-600">{{ selectedActivity.cutoffTime }}</span>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <span class="text-primary font-bold">Location:</span>
+              <span class="max-w-120 truncate text-gray-600">{{ selectedActivity.location }}</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="text-primary font-bold">Registered:</span>
+              <span class="text-gray-600"
+                >{{ selectedActivity.registered }} / {{ selectedActivity.totalSlots }}</span
+              >
+            </div>
+            <div class="flex gap-2">
+              <span class="text-primary font-bold">Checked In:</span>
+              <span class="text-green font-bold">{{ checkedInCount }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="my-auto flex flex-col items-center justify-center gap-3">
+          @if (!isQrGenerated) {
+            <button
+              mat-flat-button
+              type="button"
+              (click)="generateQrCodes()"
+              [disabled]="dataSource.data.length === 0 || !isCutoffPassed || isGenerating"
+              class="bg-primary hover:bg-primary/90 flex cursor-pointer items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <lucide-angular [img]="QrCode" class="h-4 w-4"></lucide-angular>
+              {{ isGenerating ? 'Generating...' : 'Generate QR Codes' }}
+            </button>
+            @if (!isCutoffPassed) {
+              <p class="text-center text-xs font-medium text-red-600">
+                QR generation available after cutoff time<br />({{ selectedActivity.cutoffDate }} at
+                {{ selectedActivity.cutoffTime }})
+              </p>
+            } @else {
+              <p class="text-xs text-gray-600">
+                Generates a unique QR code for each registered employee
+              </p>
+            }
+          } @else {
+            <button
+              mat-flat-button
+              type="button"
+              (click)="openScanOverlay()"
+              class="bg-primary hover:bg-primary/90 flex cursor-pointer items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition duration-200"
+            >
+              <lucide-angular [img]="ScanLine" class="h-4 w-4"></lucide-angular> Scan QR Code
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </mat-card>
+  @if (selectedActivity) {
+    <mat-card class="bg-white! p-7">
+      <div class="mb-6 flex items-center gap-2 text-lg font-bold">
+        <lucide-angular [img]="UserCheck" class="h-5 w-5"></lucide-angular> Check-In Monitor -
+        {{ selectedActivity.name }}
+      </div>
+      @if (dataSource.data.length === 0) {
+        <div
+          class="rounded-lg border border-dashed border-gray-200 py-10 text-center text-sm text-gray-600"
+        >
+          No registrations found for this activity.
+        </div>
+      } @else {
+        <table
+          mat-table
+          [dataSource]="dataSource"
+          matSort
+          (matSortChange)="announceSortChange($event)"
+          class="mat-elevation-z0 w-full bg-white!"
+        >
+          <ng-container matColumnDef="qr">
+            <th mat-header-cell *matHeaderCellDef class="text-gray-600">QR Code</th>
+            <td mat-cell *matCellDef="let row" class="py-4">
+              @if (row.qrData) {
+                <div class="flex items-center gap-2">
+                  <qrcode
+                    [qrdata]="row.qrData!"
+                    [width]="64"
+                    [errorCorrectionLevel]="'M'"
+                    [margin]="1"
+                    class="rounded border border-gray-200"
+                  ></qrcode>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="openQrView(row)"
+                    class="hover:bg-green cursor-pointer rounded-md p-2 transition duration-200 hover:text-white"
+                  >
+                    <lucide-angular [img]="View" class="h-6 w-6"></lucide-angular>
+                  </button>
+                </div>
+              } @else {
+                <span class="text-xs text-gray-400 italic">Not generated</span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="employee">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header
+              sortActionDescription="Sort by employee"
+              class="text-gray-600"
+            >
+              Employee
+            </th>
+            <td mat-cell *matCellDef="let row" class="py-4">
+              <div class="font-semibold text-gray-900">{{ row.employeeName }}</div>
+              <div class="text-xs text-gray-600">{{ row.email }}</div>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header
+              sortActionDescription="Sort by status"
+              class="text-gray-600"
+            >
+              Status
+            </th>
+            <td mat-cell *matCellDef="let row" class="py-4">
+              @if (row.status === 'checked-in') {
+                <span
+                  class="bg-green inline-flex items-center rounded-full px-3 py-1 text-xs font-bold text-white"
+                >
+                  Checked In
+                </span>
+              } @else {
+                <span
+                  class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600"
+                >
+                  Pending
+                </span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="checkedInAt">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header
+              sortActionDescription="Sort by check-in time"
+              class="text-gray-600"
+            >
+              Checked In At
+            </th>
+            <td mat-cell *matCellDef="let row" class="py-4 text-gray-600">
+              {{ formatCheckedInAt(row.checkedInAt) }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            class="transition-colors duration-200 hover:bg-gray-50!"
+          ></tr>
+        </table>
+        <div class="flex items-center gap-4 rounded-b-lg px-4 py-3 text-sm text-gray-600">
+          <span
+            >Total Registered:
+            <span class="font-semibold text-gray-900">{{ dataSource.data.length }}</span></span
+          >
+          <span class="text-gray-300">|</span>
+          <span
+            >Checked In: <span class="text-green font-semibold">{{ checkedInCount }}</span></span
+          >
+          <span class="text-gray-300">|</span>
+          <span
+            >Pending: <span class="font-semibold text-gray-900">{{ pendingCount }}</span></span
+          >
+        </div>
+      }
+    </mat-card>
+  }
+</div>
+
+@if (showScanOverlay) {
+  <div
+    class="fixed inset-0 z-100 flex flex-col items-center justify-center bg-black p-4"
+    (click)="closeScanOverlay()"
+  >
+    <video #qrVideo muted playsinline class="scan-video"></video>
+    <div
+      class="absolute top-0 right-0 left-0 flex items-center justify-between px-6 py-4"
+      (click)="$event.stopPropagation()"
+    >
+      <p class="text-sm font-semibold text-white">Scan Employee QR Code</p>
+      <button
+        type="button"
+        (click)="closeScanOverlay()"
+        class="cursor-pointer rounded-full p-1.5 text-white hover:bg-white/20"
+      >
+        <lucide-angular [img]="X" class="h-5 w-5"></lucide-angular>
+      </button>
+    </div>
+
+    <div class="scan-frame" (click)="$event.stopPropagation()">
+      <span class="scan-corner top-left"></span>
+      <span class="scan-corner top-right"></span>
+      <span class="scan-corner bottom-left"></span>
+      <span class="scan-corner bottom-right"></span>
+      <div class="scan-line bg-primary"></div>
+    </div>
+
+    <div class="absolute bottom-50 mt-8 flex flex-col items-center gap-2 text-center">
+      <span class="scan-status" [ngClass]="scanStatus">
+        @if (scanStatus === 'success') {
+          Success
+        } @else if (scanStatus === 'error') {
+          Error
+        } @else if (scanStatus === 'scanning') {
+          Scanning
+        } @else {
+          Idle
+        }
+      </span>
+      <p class="text-sm text-white/70">
+        {{ scanMessage || 'Position the QR code inside the frame' }}
+      </p>
+    </div>
+  </div>
+}
+
+@if (selectedQrRecord) {
+  <div
+    class="fixed inset-0 z-100 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+    (click)="closeQrView()"
+  >
+    <div
+      class="relative flex flex-col items-center gap-5 rounded-2xl bg-white p-8 shadow-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        type="button"
+        (click)="closeQrView()"
+        class="absolute top-3 right-3 cursor-pointer rounded-full p-1.5 text-gray-600 hover:bg-gray-100 hover:text-gray-700"
+      >
+        <lucide-angular [img]="X" class="h-5 w-5"></lucide-angular>
+      </button>
+
+      <div class="text-center">
+        <p class="text-base font-bold text-gray-900">{{ selectedQrRecord.employeeName }}</p>
+        <p class="text-xs text-gray-600">{{ selectedQrRecord.email }}</p>
+      </div>
+
+      <qrcode
+        [qrdata]="selectedQrRecord.qrData!"
+        [width]="280"
+        [errorCorrectionLevel]="'M'"
+        [margin]="1"
+        class="rounded-lg border border-gray-200"
+      ></qrcode>
+
+      <p class="text-xs text-gray-600">{{ selectedQrRecord.qrData }}</p>
+
+      <button
+        mat-flat-button
+        type="button"
+        (click)="downloadQr(selectedQrRecord)"
+        class="bg-primary hover:bg-primary/90 flex cursor-pointer items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold text-white"
+      >
+        <lucide-angular [img]="Download" class="h-4 w-4"></lucide-angular>
+        Download QR
+      </button>
+    </div>
+  </div>
+}

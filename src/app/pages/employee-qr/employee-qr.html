@@ -1,0 +1,243 @@
+<div class="relative flex flex-col gap-6">
+  <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div class="flex flex-col space-y-1.5 p-6 pb-4">
+      <div class="flex items-center gap-2 text-base font-semibold tracking-tight text-gray-900">
+        <lucide-icon [img]="Search" class="h-5 w-5"></lucide-icon>
+        Search Activities
+      </div>
+    </div>
+    <div class="p-6 pt-0">
+      <div class="relative">
+        <lucide-icon
+          [img]="Search"
+          class="absolute top-1/2 left-3 h-4 w-4 -translate-x-1 -translate-y-1/2 text-gray-400"
+        ></lucide-icon>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Search by activity name or location..."
+          class="flex h-10 w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-9 text-sm transition-colors placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-[#205b9b] focus-visible:outline-none"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div class="flex flex-col space-y-1.5 p-6">
+      <div class="text-base font-semibold tracking-tight text-gray-900">My Activities</div>
+    </div>
+
+    <div class="p-6 pt-0">
+      @if (isLoading) {
+        <div
+          class="rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm text-gray-500"
+        >
+          Loading your activity QR codes...
+        </div>
+      }
+
+      @if (!isLoading && loadError) {
+        <div
+          class="rounded-lg border border-red-200 bg-red-50 py-8 text-center text-sm text-red-700"
+        >
+          {{ loadError }}
+        </div>
+      }
+
+      @if (!isLoading && !loadError) {
+        <div class="flex flex-col gap-4">
+          @if (filteredActivities.length === 0) {
+            <div
+              class="rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm text-gray-500"
+            >
+              No activities found matching your search.
+            </div>
+          }
+
+          @for (activity of filteredActivities; track activity.title) {
+            <div
+              class="flex flex-col gap-3 rounded-lg border bg-white p-5 transition-colors"
+              [ngClass]="
+                activity.isCheckedIn ? 'border-green-200 bg-green-50/30' : 'border-gray-200'
+              "
+            >
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <p class="max-w-80 truncate font-medium text-gray-900">{{ activity.title }}</p>
+                    @if (activity.isCheckedIn) {
+                      <div
+                        class="text-green inline-flex items-center gap-1 rounded-full border border-transparent bg-[#eaf6f0] px-2.5 py-0.5 text-xs font-semibold"
+                      >
+                        <lucide-icon [img]="CheckCircle" class="h-3 w-3"></lucide-icon>
+                        Checked In
+                      </div>
+                    }
+                  </div>
+
+                  <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                    <span class="flex items-center gap-1">
+                      <lucide-icon [img]="Calendar" class="h-3 w-3"></lucide-icon>
+                      {{ activity.date }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <lucide-icon [img]="Clock" class="h-3 w-3"></lucide-icon>
+                      {{ activity.time }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <lucide-icon [img]="MapPin" class="h-3 w-3"></lucide-icon>
+                      <span class="max-w-70 truncate">{{ activity.location }}</span>
+                    </span>
+                  </div>
+
+                  @if (activity.isCheckedIn) {
+                    <p class="text-green mt-1 text-xs font-medium">
+                      Checked In: {{ activity.checkInDate }} at {{ activity.checkInTime }}
+                    </p>
+                  }
+
+                  @if (!activity.qrData && !activity.isCheckedIn) {
+                    <p class="mt-1 text-xs font-medium text-gray-500">
+                      QR code has not been generated yet for this registration.
+                    </p>
+                  }
+                </div>
+
+                @if (!activity.isCheckedIn) {
+                  <button
+                    (click)="toggleQr(activity)"
+                    [disabled]="!activity.qrData"
+                    [ngClass]="
+                      activity.showQr
+                        ? 'border border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : activity.qrData
+                          ? 'hover:bg-primary/90 bg-primary cursor-pointer text-white'
+                          : 'cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400'
+                    "
+                    class="focus-visible:ring-primary inline-flex h-9 cursor-pointer items-center justify-center gap-2 self-start rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-none sm:self-center"
+                  >
+                    <lucide-icon [img]="QrCode" class="h-4 w-4"></lucide-icon>
+                    {{ activity.showQr ? 'Hide QR' : 'View QR' }}
+                  </button>
+                }
+              </div>
+
+              @if (activity.showQr && !activity.isCheckedIn) {
+                <div
+                  class="animate-in fade-in slide-in-from-top-2 mt-3 flex flex-col items-center justify-center border-t border-gray-100 pt-4"
+                >
+                  <p class="mb-3 text-sm text-gray-500">
+                    Present this code to the event coordinator
+                  </p>
+
+                  <div
+                    class="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-2 shadow-sm"
+                  >
+                    <img
+                      [src]="
+                        'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' +
+                        activity.qrData
+                      "
+                      alt="QR Code"
+                      class="h-32 w-32 object-contain"
+                    />
+
+                    <button
+                      (click)="enlargeQr(activity)"
+                      class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-black/60 text-white opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100"
+                    >
+                      <lucide-icon [img]="Maximize" class="mb-1 h-6 w-6"></lucide-icon>
+                      <span class="text-xs font-medium">Enlarge</span>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (enlargedQrActivity) {
+    <div
+      class="animate-in fade-in zoom-in-95 fixed inset-0 z-100 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm duration-200"
+    >
+      <div
+        class="relative flex min-h-112.5 w-full max-w-sm flex-col items-center justify-center overflow-hidden rounded-2xl bg-white p-6 shadow-2xl transition-all duration-500"
+      >
+        @if (!isScanSuccessful()) {
+          <button
+            (click)="closeEnlargedQr()"
+            class="absolute top-4 right-4 z-10 rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
+          >
+            <lucide-icon [img]="X" class="h-5 w-5"></lucide-icon>
+          </button>
+        }
+
+        @if (!isScanSuccessful()) {
+          <div class="animate-in fade-in flex w-full flex-col items-center duration-300">
+            <h3 class="mb-1 pr-6 pl-6 text-center text-lg font-bold text-gray-900">
+              {{ enlargedQrActivity.title }}
+            </h3>
+            <p class="text-primary mb-6 animate-pulse text-center text-sm font-semibold">
+              Waiting for scanner...
+            </p>
+
+            <div
+              class="relative mb-6 overflow-hidden rounded-xl border-4 border-gray-100 bg-white p-4 shadow-inner"
+            >
+              <img
+                [src]="
+                  'https://api.qrserver.com/v1/create-qr-code/?size=300x300&format=jpeg&data=' +
+                  enlargedQrActivity.qrData
+                "
+                alt="Enlarged QR Code"
+                class="relative z-0 h-64 w-64 object-contain"
+              />
+
+              <div
+                class="animate-scan absolute top-0 left-0 z-10 h-1 w-full bg-red-500 shadow-[0_0_12px_4px_rgba(239,68,68,0.6)]"
+              ></div>
+            </div>
+
+            <button
+              (click)="downloadQr(enlargedQrActivity)"
+              class="hover:bg-primary/90 bg-primary focus-visible:ring-primary inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap text-white transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <lucide-icon [img]="Download" class="h-4 w-4"></lucide-icon>
+              Download as JPG
+            </button>
+          </div>
+        }
+
+        @if (isScanSuccessful()) {
+          <div class="flex w-full flex-col items-center justify-center py-4">
+            <div
+              class="animate-scale-pop mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-[#eaf6f0] shadow-[0_0_0_8px_rgba(48,146,103,0.1)]"
+            >
+              <lucide-icon [img]="CheckCircle" class="text-green h-14 w-14"></lucide-icon>
+            </div>
+
+            <div class="animate-slide-up-fade w-full text-center">
+              <h3 class="mb-2 text-3xl font-extrabold tracking-tight text-gray-900">Checked In!</h3>
+              <p class="mb-8 px-2 text-sm leading-relaxed text-gray-500">
+                You are successfully checked in to <br />
+                <span class="mt-1 inline-block text-base font-bold text-gray-900">{{
+                  enlargedQrActivity.title
+                }}</span>
+              </p>
+
+              <button
+                (click)="closeEnlargedQr()"
+                class="bg-green hover:bg-green/90 inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2 text-base font-bold whitespace-nowrap text-white transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

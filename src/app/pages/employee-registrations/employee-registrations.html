@@ -1,0 +1,85 @@
+<div class="flex flex-col gap-4">
+  @if (registrations.length === 0) {
+    <div class="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-500 shadow-sm">
+      <p>You have no confirmed registrations.</p>
+    </div>
+  }
+
+  @for (registration of registrations; track registration.id) {
+    <div
+      class="rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md"
+    >
+      <div class="flex flex-col space-y-1.5 p-6 pb-3">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="max-w-200 truncate text-base font-semibold tracking-tight text-gray-900">
+              {{ registration.title }}
+            </div>
+            <div
+              class="mt-1 inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-slate-800"
+            >
+              {{ registration.category }}
+            </div>
+          </div>
+          <div
+            class="bg-green inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
+          >
+            {{ registration.status }}
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6 pt-0">
+        <p class="mb-4 text-sm leading-relaxed text-gray-500">
+          {{ registration.description }}
+        </p>
+
+        <div class="mb-5 flex flex-col gap-2 text-sm text-gray-500">
+          <div class="flex items-center gap-2">
+            <lucide-icon [img]="Calendar" class="h-4 w-4 text-gray-400"></lucide-icon>
+            <span>{{ registration.date }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <lucide-icon [img]="Clock" class="h-4 w-4 text-gray-400"></lucide-icon>
+            <span>{{ registration.time }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <lucide-icon [img]="MapPin" class="h-4 w-4 text-gray-400"></lucide-icon>
+            <span class="max-w-100 truncate">{{ registration.location }}</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-[#205b9b] pt-4">
+          <div class="space-y-1">
+            <p class="text-xs font-medium text-gray-400">
+              Registered: {{ registration.registeredOn }}
+            </p>
+            <p
+              class="text-xs font-medium"
+              [class]="isCutoffPassed(registration) ? 'text-red-600' : 'text-gray-400'"
+            >
+              Cutoff: {{ registration.cutoffDate }} at {{ registration.cutoffTime }}
+            </p>
+          </div>
+          <button
+            (click)="cancelRegistration(registration.id)"
+            [disabled]="isCutoffPassed(registration) || isCancelling(registration)"
+            [class]="
+              isCutoffPassed(registration)
+                ? 'inline-flex h-9 cursor-not-allowed items-center justify-center rounded-md border border-[#c9a3a3] bg-[#c9a3a3] px-4 py-2 text-sm font-medium text-white'
+                : 'hover:border-red hover:bg-red focus-visible:ring-red inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-gray-300 bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-70'
+            "
+          >
+            {{
+              isCutoffPassed(registration)
+                ? 'Cancellation Closed'
+                : isCancelling(registration)
+                  ? 'Cancelling...'
+                  : 'Cancel Registration'
+            }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

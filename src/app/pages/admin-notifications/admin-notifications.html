@@ -1,0 +1,199 @@
+<div class="flex flex-col gap-6">
+  <mat-card class="bg-white! p-7">
+    <div class="mb-6 flex items-center gap-2 text-lg font-bold">
+      <lucide-angular [img]="Send" class="h-4 w-4"></lucide-angular>
+      Send Broadcast Message
+    </div>
+
+    <form class="flex flex-col gap-1" [formGroup]="broadcastForm">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Title</mat-label>
+        <input
+          matInput
+          type="text"
+          placeholder="e.g. Service Day Reminder"
+          formControlName="title"
+        />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Message</mat-label>
+        <textarea
+          matInput
+          placeholder="Enter your broadcast message..."
+          rows="3"
+          formControlName="message"
+        ></textarea>
+      </mat-form-field>
+    </form>
+    <mat-dialog-actions>
+      <button
+        mat-flat-button
+        type="button"
+        color="primary"
+        (click)="sendBroadcast()"
+        [disabled]="broadcastForm.invalid || isBroadcastSending"
+        class="bg-primary hover:bg-primary/90 flex w-full cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-3 text-white transition duration-200 disabled:opacity-50"
+      >
+        <lucide-angular [img]="Send" class="h-4 w-4"></lucide-angular>
+        @if (isBroadcastSending) {
+          Sending...
+        } @else {
+          Send Broadcast
+        }
+      </button>
+    </mat-dialog-actions>
+  </mat-card>
+
+  <mat-card class="bg-white! p-7">
+    <div class="mb-6 flex items-center gap-2 text-lg font-bold">
+      <lucide-angular [img]="CalendarClock" class="h-4 w-4"></lucide-angular>
+      Scheduled Reminders
+    </div>
+
+    <form [formGroup]="scheduleForm" class="mb-6 grid grid-cols-3 items-end gap-4">
+      <mat-form-field appearance="outline" class="flex-1" subscriptSizing="dynamic">
+        <mat-label>Activity</mat-label>
+        <mat-select formControlName="activity" placeholder="Select activity">
+          @for (activity of activities; track activity) {
+            <mat-option [value]="activity">{{ activity }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="flex-1" subscriptSizing="dynamic">
+        <mat-label>Reminder Interval</mat-label>
+        <mat-select formControlName="interval">
+          @for (opt of intervalOptions; track opt.value) {
+            <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        type="button"
+        (click)="scheduleReminder()"
+        [disabled]="!scheduleForm.get('activity')?.value"
+        class="bg-primary hover:bg-primary/90 flex h-14 cursor-pointer items-center justify-center gap-2 rounded-md px-4 text-white disabled:opacity-60"
+      >
+        <lucide-angular [img]="Clock" class="h-4 w-4"></lucide-angular>
+        Schedule Reminder
+      </button>
+    </form>
+
+    <table
+      mat-table
+      [dataSource]="dataSource"
+      matSort
+      (matSortChange)="announceSortChange($event)"
+      class="mat-elevation-z8 w-full bg-white!"
+    >
+      <ng-container matColumnDef="activity">
+        <th
+          mat-header-cell
+          *matHeaderCellDef
+          mat-sort-header
+          sortActionDescription="Sort by activity"
+          class="text-gray-500"
+        >
+          Activity
+        </th>
+        <td mat-cell *matCellDef="let row" class="max-w-40 truncate py-4 font-semibold">
+          {{ row.activity }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <th
+          mat-header-cell
+          *matHeaderCellDef
+          mat-sort-header
+          sortActionDescription="Sort by type"
+          class="text-gray-500"
+        >
+          Type
+        </th>
+        <td mat-cell *matCellDef="let row" class="py-4">
+          <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">{{
+            row.type
+          }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="scheduledFor">
+        <th
+          mat-header-cell
+          *matHeaderCellDef
+          mat-sort-header
+          sortActionDescription="Sort by scheduledFor"
+          class="text-gray-500"
+        >
+          Scheduled For
+        </th>
+        <td mat-cell *matCellDef="let row" class="py-4 text-gray-500">{{ row.scheduledFor }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th
+          mat-header-cell
+          *matHeaderCellDef
+          mat-sort-header
+          sortActionDescription="Sort by status"
+          class="text-gray-500"
+        >
+          Status
+        </th>
+        <td mat-cell *matCellDef="let row" class="py-4">
+          @if (row.status === 'sent') {
+            <span
+              class="bg-green inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-white"
+            >
+              <lucide-angular [img]="CircleCheck" class="h-3.5 w-3.5"></lucide-angular>
+              Sent
+            </span>
+          } @else {
+            <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600"
+              >Pending</span
+            >
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="action">
+        <th mat-header-cell *matHeaderCellDef class="text-right text-gray-500">Action</th>
+        <td mat-cell *matCellDef="let row" class="py-4 text-right">
+          @if (row.status === 'pending') {
+            <div class="inline-flex items-center gap-2">
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="sendNow(row)"
+                [disabled]="sendingReminderId === row._id || deletingReminderId === row._id"
+                class="hover:bg-green cursor-pointer rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold transition duration-200 hover:text-white"
+              >
+                {{ sendingReminderId === row._id ? 'Sending...' : 'Send Now' }}
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Delete reminder"
+                (click)="deleteReminder(row)"
+                [disabled]="sendingReminderId === row._id || deletingReminderId === row._id"
+                class="text-red hover:bg-red inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2 transition duration-200 hover:text-white"
+              >
+                <lucide-angular [img]="Trash2" class="h-4 w-4"></lucide-angular>
+              </button>
+            </div>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        class="transition-colors duration-200 hover:bg-gray-50!"
+      ></tr>
+    </table>
+  </mat-card>
+</div>

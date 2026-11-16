@@ -1,0 +1,108 @@
+<div class="w-lg">
+  <h2 mat-dialog-title class="font-semibold!">
+    {{ isEditMode ? 'Edit Activity' : 'Add New Activity' }}
+  </h2>
+  <mat-dialog-content class="text-gray-500!">{{
+    isEditMode ? 'Update the NGO activity details' : 'Fill in the details for a new NGO activity'
+  }}</mat-dialog-content>
+
+  <form [formGroup]="activityForm" class="flex flex-col gap-4 px-6 py-4">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>NGO Name</mat-label>
+      <input matInput placeholder="Enter NGO name" formControlName="name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Description</mat-label>
+      <textarea
+        matInput
+        placeholder="Enter activity description"
+        formControlName="description"
+        rows="3"
+      ></textarea>
+    </mat-form-field>
+
+    <div class="flex gap-4">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Service Type</mat-label>
+        <mat-select placeholder="Select type" formControlName="serviceType">
+          <mat-option value="Environment">Environment</mat-option>
+          <mat-option value="Social">Social</mat-option>
+          <mat-option value="Hunger Relief">Hunger Relief</mat-option>
+          <mat-option value="Health">Health</mat-option>
+          <mat-option value="Education">Education</mat-option>
+          <mat-option value="Community Service">Community Service</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Location</mat-label>
+        <input matInput placeholder="Activity location" formControlName="location" />
+      </mat-form-field>
+    </div>
+
+    <div class="flex gap-4">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Date</mat-label>
+        <input matInput type="date" placeholder="mm / dd / yyyy" formControlName="scheduleDate" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Time</mat-label>
+        <input matInput type="time" placeholder="--:-- --" formControlName="scheduleTime" />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Total Slots Available</mat-label>
+      <input
+        matInput
+        type="number"
+        placeholder="25"
+        formControlName="totalSlots"
+        [min]="activityForm.get('registered')?.value || 1"
+      />
+    </mat-form-field>
+
+    @if (
+      activityForm.errors?.['slotBelowRegistered'] && (activityForm.touched || activityForm.dirty)
+    ) {
+      <div class="text-red -mt-7 px-3 text-sm">
+        Total slots cannot be lower than the number of registered employees.
+      </div>
+    }
+
+    <div class="flex gap-4">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Registration Cutoff Date</mat-label>
+        <input matInput type="date" placeholder="mm / dd / yyyy" formControlName="cutoffDate" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Cutoff Time</mat-label>
+        <input matInput type="time" placeholder="05:00 PM" formControlName="cutoffTime" />
+      </mat-form-field>
+    </div>
+
+    @if (
+      activityForm.errors?.['cutoffAfterSchedule'] && (activityForm.touched || activityForm.dirty)
+    ) {
+      <div class="text-red -mt-7 px-3 text-sm">
+        Registration cutoff date and time must be before the schedule date and time.
+      </div>
+    }
+  </form>
+
+  <mat-dialog-actions class="inline-flex gap-3">
+    <button
+      mat-dialog-close
+      class="hover:bg-green cursor-pointer rounded-md border border-gray-300 px-4 py-2 transition duration-200 hover:text-white"
+    >
+      Cancel
+    </button>
+    <button
+      (click)="onSubmit()"
+      [disabled]="!activityForm.valid"
+      class="bg-primary hover:bg-primary/90 cursor-pointer rounded-md px-4 py-2 text-white transition duration-200 disabled:opacity-50"
+    >
+      {{ isEditMode ? 'Update Activity' : 'Add Activity' }}
+    </button>
+  </mat-dialog-actions>
+</div>

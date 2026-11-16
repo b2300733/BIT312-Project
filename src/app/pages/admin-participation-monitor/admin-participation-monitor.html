@@ -1,0 +1,144 @@
+<div class="flex flex-col gap-6">
+  <mat-card class="bg-white! p-7">
+    <div class="mb-4 flex flex-col gap-4 md:flex-row md:justify-between md:gap-0">
+      <div class="text-lg font-bold">Register Timeline</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-fit">
+        <mat-label>Date range</mat-label>
+        <mat-date-range-input [formGroup]="dateRange" [rangePicker]="picker">
+          <input matStartDate formControlName="start" placeholder="Start date" />
+          <input matEndDate formControlName="end" placeholder="End date" />
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-date-range-picker #picker></mat-date-range-picker>
+      </mat-form-field>
+    </div>
+    <div class="h-80">
+      <canvas #timelineChart></canvas>
+    </div>
+  </mat-card>
+
+  <mat-card class="bg-white! p-7">
+    <div class="pb-7 text-lg font-bold">Activity Breakdown</div>
+    @for (activity of activities; track $index) {
+      <mat-accordion class="mb-4">
+        <mat-expansion-panel class="bg-white!">
+          <mat-expansion-panel-header class="py-12!">
+            <mat-panel-title class="flex w-full flex-col gap-3">
+              <div class="flex w-full items-center justify-between">
+                <div class="flex flex-col gap-0.5">
+                  <div class="max-w-110 truncate text-sm font-medium">{{ activity.name }}</div>
+                  <div class="text-xs text-gray-600">
+                    <span class="flex"
+                      >{{ activity.scheduleDate }} at {{ activity.scheduleTime }} -
+                      <span class="block max-w-80 truncate">{{ activity.location }}</span></span
+                    >
+                  </div>
+                </div>
+                @if (getStatus(activity) === 'Closed' || getStatus(activity) === 'Full') {
+                  <div
+                    class="bg-red inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
+                  >
+                    {{ getStatus(activity) }}
+                  </div>
+                } @else {
+                  <span
+                    class="inline-flex items-center justify-center rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-semibold text-black"
+                    >{{ getSlotsLeft(activity) }} slots left</span
+                  >
+                }
+              </div>
+              <div class="flex w-full items-center gap-2">
+                <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200">
+                  <div
+                    class="bg-primary h-full"
+                    [style.width.%]="getSlotPercentage(activity.registered, activity.totalSlots)"
+                  ></div>
+                </div>
+                <span class="text-xs font-medium"
+                  >{{ activity.registered }}/{{ activity.totalSlots }}</span
+                >
+              </div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <table
+            mat-table
+            [dataSource]="getRegistrationsForActivity(activity.name, $index)"
+            matSort
+            (matSortChange)="announceSortChange($event)"
+            class="bg-white!"
+          >
+            <ng-container matColumnDef="employeeName">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header
+                sortActionDescription="Sort by name"
+                class="text-gray-600"
+              >
+                Employee
+              </th>
+              <td mat-cell *matCellDef="let element" class="py-4">
+                {{ element.employeeName }}
+                <div class="text-xs text-gray-600">{{ element.email }}</div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="department">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header
+                sortActionDescription="Sort by department"
+                class="text-gray-600"
+              >
+                Department
+              </th>
+              <td mat-cell *matCellDef="let element" class="py-4">{{ element.department }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="registeredDate">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header
+                sortActionDescription="Sort by registered date"
+                class="text-gray-600"
+              >
+                Registered
+              </th>
+              <td mat-cell *matCellDef="let element" class="py-4">
+                {{ element.registeredDate }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns"
+              class="transition-colors duration-200 hover:bg-gray-50!"
+            ></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td
+                class="mat-cell py-6 text-center text-sm text-gray-600"
+                [attr.colspan]="displayedColumns.length"
+              >
+                No registrations for this activity yet
+              </td>
+            </tr>
+          </table>
+        </mat-expansion-panel>
+      </mat-accordion>
+    }
+    <mat-paginator
+      class="bg-white!"
+      [length]="totalActivities"
+      [pageSize]="pageSize"
+      [pageIndex]="pageIndex"
+      [pageSizeOptions]="[5, 10, 25]"
+      [showFirstLastButtons]="true"
+      (page)="onPageChange($event)"
+      aria-label="Select page of activities"
+    >
+    </mat-paginator>
+  </mat-card>
+</div>

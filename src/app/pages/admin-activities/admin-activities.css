@@ -1,0 +1,6 @@
+.mat-mdc-table .mat-mdc-row,
+.mat-mdc-table .mat-mdc-header-row,
+.mat-mdc-table .mat-mdc-cell,
+.mat-mdc-table .mat-mdc-header-cell {
+  border-bottom-color: #e5e7eb !important;
+}

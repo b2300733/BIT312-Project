@@ -1,0 +1,116 @@
+@keyframes scan-line {
+  0% {
+    top: 0%;
+  }
+  50% {
+    top: calc(100% - 2px);
+  }
+  100% {
+    top: 0%;
+  }
+}
+
+.scan-line {
+  animation: scan-line 2s ease-in-out infinite;
+}
+
+.scan-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-frame {
+  position: relative;
+  width: min(70vw, 360px);
+  height: min(70vw, 360px);
+  border-radius: 16px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+}
+
+.scan-corner {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-color: #fff;
+}
+
+.scan-corner.top-left {
+  top: 0;
+  left: 0;
+  border-top: 4px solid #fff;
+  border-left: 4px solid #fff;
+  border-top-left-radius: 12px;
+}
+
+.scan-corner.top-right {
+  top: 0;
+  right: 0;
+  border-top: 4px solid #fff;
+  border-right: 4px solid #fff;
+  border-top-right-radius: 12px;
+}
+
+.scan-corner.bottom-left {
+  bottom: 0;
+  left: 0;
+  border-bottom: 4px solid #fff;
+  border-left: 4px solid #fff;
+  border-bottom-left-radius: 12px;
+}
+
+.scan-corner.bottom-right {
+  right: 0;
+  bottom: 0;
+  border-right: 4px solid #fff;
+  border-bottom: 4px solid #fff;
+  border-bottom-right-radius: 12px;
+}
+
+.scan-frame .scan-line {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  opacity: 0.9;
+  box-shadow: 0 0 8px 2px var(--color-primary);
+}
+
+.scan-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.scan-status.scanning {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.5);
+}
+
+.scan-status.success {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.5);
+}
+
+.scan-status.error {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fecaca;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.scan-status.idle {
+  background: rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+}

@@ -1,0 +1,45 @@
+<mat-card class="bg-white! p-6">
+  <div class="mb-6">
+    <h2 class="text-xl font-bold">Register Employee</h2>
+    <p class="text-sm text-gray-500">Create a new employee account for Service Day.</p>
+  </div>
+
+  <form [formGroup]="userForm" class="grid gap-2" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Full Name</mat-label>
+      <input matInput placeholder="Enter full name" formControlName="name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Email</mat-label>
+      <input matInput placeholder="name@company.com" formControlName="email" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Password</mat-label>
+      <input
+        matInput
+        type="password"
+        placeholder="Minimum 6 characters"
+        formControlName="password"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Department</mat-label>
+      <input matInput placeholder="e.g. Engineering" formControlName="department" />
+    </mat-form-field>
+
+    @if (submitErrorMessage()) {
+      <p class="text-red text-sm" aria-live="polite">{{ submitErrorMessage() }}</p>
+    }
+
+    <button
+      class="bg-primary hover:bg-primary/90 flex w-full cursor-pointer items-center justify-center rounded-md px-4 py-3 text-white transition duration-200 disabled:opacity-50"
+      type="submit"
+      [disabled]="userForm.invalid || isSubmitting()"
+    >
+      Register Employee
+    </button>
+  </form>
+</mat-card>

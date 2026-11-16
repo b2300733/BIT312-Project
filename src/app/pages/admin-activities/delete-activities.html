@@ -1,0 +1,21 @@
+<div class="w-lg">
+  <h2 mat-dialog-title class="font-semibold!">Delete Activity</h2>
+  <mat-dialog-content class="text-gray-500!"
+    >Are you sure you want to delete "<span class="font-bold">{{ element.name }}</span
+    >"? This will also remove all registrations for this activity.</mat-dialog-content
+  >
+  <mat-dialog-actions class="inline-flex gap-3">
+    <button
+      mat-dialog-close
+      class="hover:bg-green cursor-pointer rounded-md border border-gray-300 px-4 py-2 transition duration-200 hover:text-white"
+    >
+      Close
+    </button>
+    <button
+      [mat-dialog-close]="true"
+      class="bg-primary hover:bg-primary/90 cursor-pointer rounded-md px-4 py-2 text-white transition duration-200"
+    >
+      Delete
+    </button>
+  </mat-dialog-actions>
+</div>

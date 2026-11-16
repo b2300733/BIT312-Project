@@ -1,0 +1,272 @@
+<mat-card class="bg-white! p-1">
+  <div class="flex justify-between p-6">
+    <div class="inline-flex items-center justify-center text-lg font-bold">NGO Activities</div>
+    <button
+      type="button"
+      class="bg-primary hover:bg-primary/90 inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-white transition duration-200"
+      (click)="openAddEdit()"
+    >
+      <lucide-angular [img]="Plus" class="h-4 w-4" />Add Activity
+    </button>
+  </div>
+
+  <div class="px-6!">
+    <!-- large screens -->
+    <div class="hidden lg:block">
+      @if (dataSource.data.length > 0) {
+        <table
+          mat-table
+          [dataSource]="dataSource"
+          matSort
+          (matSortChange)="announceSortChange($event)"
+          class="mat-elevation-z8 bg-white!"
+        >
+          <ng-container matColumnDef="name">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header
+              sortActionDescription="Sort by name"
+              class="text-gray-500"
+            >
+              NGO / Activity
+            </th>
+            <td mat-cell *matCellDef="let element">
+              <div class="inline-flex flex-col py-6">
+                <div class="max-w-30 truncate font-semibold">{{ element.name }}</div>
+                <div class="text-xs text-gray-500">{{ element.serviceType }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="scheduleDate">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header
+              sortActionDescription="Sort by scheduleDate"
+              class="text-gray-500"
+            >
+              Schedule
+            </th>
+            <td mat-cell *matCellDef="let element">
+              <div class="inline-flex flex-col py-6">
+                <div>{{ element.scheduleDate }}</div>
+                <div class="text-xs text-gray-500">{{ element.scheduleTime }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="location">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header
+              sortActionDescription="Sort by location"
+              class="text-gray-500"
+            >
+              Location
+            </th>
+            <td mat-cell *matCellDef="let element" class="py-6">
+              <div class="max-w-30 truncate">{{ element.location }}</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="slots">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header
+              sortActionDescription="Sort by slots"
+              class="text-gray-500"
+            >
+              Slots
+            </th>
+            <td mat-cell *matCellDef="let element" class="py-6">
+              <div class="inline-flex flex-col gap-1">
+                <div>{{ element.registered }} / {{ element.totalSlots }}</div>
+                <div class="h-1.5 w-20 overflow-hidden rounded-full bg-gray-200">
+                  <div
+                    class="bg-primary h-full"
+                    [style.width.%]="getSlotPercentage(element.registered, element.totalSlots)"
+                  ></div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="cutoffDate">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header
+              sortActionDescription="Sort by cutoffDate"
+              class="text-gray-500"
+            >
+              Cutoff
+            </th>
+            <td mat-cell *matCellDef="let element" class="py-6">
+              <div class="inline-flex flex-col">
+                <div>{{ element.cutoffDate }}</div>
+                <div class="text-xs text-gray-500">{{ element.cutoffTime }}</div>
+              </div>
+            </td></ng-container
+          >
+
+          <ng-container matColumnDef="status">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header
+              sortActionDescription="Sort by status"
+              class="text-gray-500"
+            >
+              Status
+            </th>
+            <td mat-cell *matCellDef="let element" class="py-6">
+              <div
+                [class]="
+                  getStatus(element) === 'Closed' || getStatus(element) === 'Full'
+                    ? 'bg-red inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white'
+                    : 'bg-green inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white'
+                "
+              >
+                {{ getStatus(element) }}
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef class="text-gray-500">Action</th>
+            <td mat-cell *matCellDef="let element" class="py-6">
+              <div class="inline-flex gap-2">
+                <button
+                  type="button"
+                  (click)="openAddEdit(element)"
+                  [disabled]="isCutoffPassed(element)"
+                  class="hover:bg-green inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2 transition duration-200 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <lucide-angular [img]="Pencil" class="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  (click)="openDelete(element)"
+                  [disabled]="isCutoffPassed(element)"
+                  [class]="
+                    isCutoffPassed(element)
+                      ? 'text-red hover:bg-red inline-flex h-8 cursor-not-allowed items-center justify-center rounded-md px-2 opacity-60 hover:text-white'
+                      : 'text-red hover:bg-red inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2 transition duration-200 hover:text-white'
+                  "
+                >
+                  <lucide-angular [img]="Trash2" class="h-4 w-4" />
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            class="transition-colors duration-200 hover:bg-gray-50!"
+          ></tr>
+        </table>
+        <mat-paginator
+          class="bg-white!"
+          [pageSizeOptions]="[5, 10, 25]"
+          [showFirstLastButtons]="true"
+          aria-label="Select page of activities"
+        >
+        </mat-paginator>
+      } @else {
+        <div class="flex flex-col items-center justify-center py-16 text-gray-500">
+          <div class="text-lg font-semibold">No activities yet</div>
+          <div class="text-sm">Click "Add Activity" to create activity</div>
+        </div>
+      }
+    </div>
+
+    <!-- Mobile screens -->
+    <div class="flex flex-col gap-3 lg:hidden">
+      @if (dataSource.data.length > 0) {
+        @for (element of dataSource.data; track element.name) {
+          <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-xs">
+            <div class="mb-3 flex items-start justify-between">
+              <div class="flex-1">
+                <div class="w-80 truncate text-base font-semibold">{{ element.name }}</div>
+                <div class="text-sm text-gray-500">{{ element.serviceType }}</div>
+              </div>
+              <div
+                [class]="
+                  getStatus(element) === 'Closed' || getStatus(element) === 'Full'
+                    ? 'bg-red inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white'
+                    : 'bg-green inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white'
+                "
+              >
+                {{ getStatus(element) }}
+              </div>
+            </div>
+
+            <div class="mb-3 flex flex-col gap-2 text-sm text-gray-500">
+              <div class="flex items-center gap-2">
+                <lucide-angular [img]="Calendar" class="h-4 w-4" />
+                <span>{{ element.scheduleDate }} at {{ element.scheduleTime }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <lucide-angular [img]="MapPin" class="h-4 w-4" />
+                <span class="max-w-70 truncate">{{ element.location }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <lucide-angular [img]="Clock" class="h-4 w-4" />
+                <span>Cutoff: {{ element.cutoffDate }} {{ element.cutoffTime }}</span>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div class="mb-1 flex items-center justify-between text-sm">
+                <span>Slots</span>
+                <span class="font-semibold">{{ element.registered }}/{{ element.totalSlots }}</span>
+              </div>
+              <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div
+                  class="bg-primary h-full"
+                  [style.width.%]="getSlotPercentage(element.registered, element.totalSlots)"
+                ></div>
+              </div>
+            </div>
+
+            <div class="flex gap-2">
+              <button
+                type="button"
+                (click)="openAddEdit(element)"
+                [disabled]="isCutoffPassed(element)"
+                class="hover:bg-green flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm transition duration-200 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <lucide-angular [img]="Pencil" class="h-4 w-4" />
+                Edit
+              </button>
+              <button
+                type="button"
+                (click)="openDelete(element)"
+                [disabled]="isCutoffPassed(element)"
+                [class]="
+                  isCutoffPassed(element)
+                    ? 'text-red hover:bg-red flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm opacity-60 hover:text-white'
+                    : 'text-red hover:bg-red hover:border-red flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm transition duration-200 hover:text-white'
+                "
+              >
+                <lucide-angular [img]="Trash2" class="h-4 w-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        }
+      } @else {
+        <div class="flex flex-col items-center justify-center py-16 text-gray-500">
+          <div class="text-lg font-semibold">No activities yet</div>
+          <div class="text-sm">Click "Add Activity" to create activity</div>
+        </div>
+      }
+    </div>
+  </div>
+</mat-card>

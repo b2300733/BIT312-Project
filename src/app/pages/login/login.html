@@ -1,0 +1,45 @@
+<div class="flex min-h-screen flex-col items-center justify-center bg-gray-100 px-4 py-12">
+  <div
+    class="bg-primary mb-5 flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold tracking-widest text-white uppercase"
+  >
+    <lucide-icon [name]="Heart" [size]="16" class="text-white" />
+    SERVICE DAY
+  </div>
+
+  <h1 class="mb-2 text-3xl font-extrabold text-gray-900">Welcome Back</h1>
+  <p class="mb-8 text-sm text-gray-500">Sign in to access the Service Day Dashboard</p>
+
+  <mat-card class="w-full max-w-md rounded-2xl! p-2">
+    <mat-card-content>
+      <h2 class="mb-1 text-xl font-bold text-gray-900">Sign In</h2>
+      <p class="text-primary mb-6 text-sm">Enter your company credentials to continue</p>
+
+      @if (error) {
+        <div class="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error }}</div>
+      }
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" placeholder="you@company.com" [(ngModel)]="email" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Password</mat-label>
+        <input
+          matInput
+          type="password"
+          placeholder="Enter your password"
+          [(ngModel)]="password"
+          (keydown.enter)="signIn()"
+        />
+      </mat-form-field>
+
+      <button
+        (click)="signIn()"
+        class="bg-primary! w-full cursor-pointer rounded-md py-4.5 text-sm font-bold text-white!"
+      >
+        Sign In
+      </button>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -32,9 +32,9 @@ app.get('/health', (req, res) => res.status(200).send('OK'));
 const angularDistPath = path.join(__dirname, '../dist/BIT210-Service-Day-Dashboard/browser');
 app.use(express.static(angularDistPath));
 
-// Fallback all non-API routes to Angular index.html for client-side routing
+// Fallback all non-API routes to Angular index.csr.html (in /dist) for client-side routing
 app.use((req, res) => {
-  res.sendFile(path.join(angularDistPath, 'index.html'));
+  res.sendFile(path.join(angularDistPath, 'index.csr.html'));
 });
 
 // Verify RDS MySQL connection on startup

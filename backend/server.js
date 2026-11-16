@@ -33,7 +33,7 @@ const angularDistPath = path.join(__dirname, '../dist/BIT210-Service-Day-Dashboa
 app.use(express.static(angularDistPath));
 
 // Fallback all non-API routes to Angular index.html for client-side routing
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(angularDistPath, 'index.html'));
 });
 

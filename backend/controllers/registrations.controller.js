@@ -1,6 +1,6 @@
 require('dotenv').config();
 const crypto = require('crypto');
-const db = require('../config/db');
+const db = require('../config');
 
 const isValidSqlId = (val) => /^\d+$/.test(String(val || '').trim());
 

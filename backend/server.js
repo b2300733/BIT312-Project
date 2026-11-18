@@ -3,7 +3,7 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const db = require('./config/db');
+const db = require('./config');
 
 const app = express();
 
